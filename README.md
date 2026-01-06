@@ -1,4 +1,4 @@
-# Programma DevOps - Setup
+# DevOps Intro - Setup
 
 Questo repository contiene i materiali e gli script di automazione per il corso DevOps. Segui le istruzioni qui sotto per configurare il tuo ambiente locale su Windows.
 
@@ -7,8 +7,8 @@ Questo repository contiene i materiali e gli script di automazione per il corso 
 Apri un terminale (PowerShell o Prompt dei comandi) ed esegui il seguente comando per clonare il repository:
 
 ```powershell
-git clone https://github.com/Keneth/devops-programme.git
-cd devops-programme
+git clone https://github.com/keneth-arias-its/devops-intro.git
+cd devops-intro
 ```
 
 *Nota: se non hai ancora installato Git, puoi scaricare il file ZIP da GitHub ed estrarlo.*
