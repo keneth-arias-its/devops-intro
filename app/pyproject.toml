@@ -3,8 +3,8 @@ name = "devops-telemetry-app"
 version = "0.1.0"
 description = "Laptop telemetry publisher for DevOps module"
 dependencies = [
-    "psutil>=5.9.0",
-    "paho-mqtt>=1.6.1",
+    "psutil",
+    "paho-mqtt<2",
 ]
 
 [tool.uv]
