@@ -1,172 +1,102 @@
-# DESCRIPTION: This script automates the installation of VS Code, Git (Git Bash), Windows Terminal, Python 3.13, and Node.js on Windows using Winget.
-#
-# USAGE: Execute this script with Administrator privileges.
+# DESCRIPTION: Automates installation of dev tools (VS Code, Git, Terminal, Python, Node.js, uv) on Windows.
+# USAGE: Run as Administrator.
 
-# Ensure script is run as Administrator.
-if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Warning "This script requires Administrator privileges. Attempting to relaunch as Administrator..."
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Warning "Administrator privileges required. Relaunching..."
     Start-Process powershell.exe "-File", ('"{0}"' -f $MyInvocation.MyCommand.Path) -Verb RunAs
     exit
 }
 
-# Set execution policy for the current user to allow script execution.
-set-executionpolicy -scope CurrentUser -executionPolicy Bypass -Force
-
-# Suppress progress bars for a cleaner output.
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Bypass -Force
 $ProgressPreference = 'SilentlyContinue'
 
 function Install-WinGet {
-    <#
-    .SYNOPSIS
-    Checks if WinGet is installed and installs it if it's missing.
-    #>
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "WinGet not found. Installing the 'Microsoft.WinGet.Client' PowerShell module..."
+        Write-Host "WinGet not found. Installing..."
         Install-PackageProvider -Name NuGet -Force -Scope CurrentUser
         Install-Module -Name Microsoft.WinGet.Client -Force -Repository PSGallery -Scope CurrentUser
-        
-        # This command bootstraps/repairs the winget installation
         Repair-WinGetPackageManager
+        if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { throw "Failed to install WinGet." }
+    } else { Write-Host "WinGet is ready." }
+}
 
-        if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-            Write-Error "Failed to install WinGet. Please install it manually from the Microsoft Store and re-run this script."
-            exit 1
+function Install-App {
+    param([string]$Id, [string]$Name, [string]$Cmd, [switch]$CheckList)
+    
+    if ($Cmd -and (Get-Command $Cmd -ErrorAction SilentlyContinue)) {
+        Write-Host -ForegroundColor Green "$Name is already installed."
+        return
+    }
+    if ($CheckList) {
+        winget list --id $Id -e 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host -ForegroundColor Green "$Name is already installed (detected via WinGet)."
+            return
         }
-        Write-Host "WinGet installed successfully."
-    } else {
-        Write-Host "WinGet is already installed."
-    }
-}
-
-function Install-VSCode {
-    <#
-    .SYNOPSIS
-    Checks for and installs Microsoft Visual Studio Code.
-    #>
-    if (Get-Command code -ErrorAction SilentlyContinue) {
-        Write-Host -ForegroundColor Green "VS Code is already installed."
-        return
     }
 
-    Write-Host "Installing Microsoft Visual Studio Code..."
-    winget install -e --id Microsoft.VisualStudioCode --accept-package-agreements --accept-source-agreements
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "VS Code installed successfully."
-    } else {
-        Write-Error "VS Code installation failed."
-    }
-}
-
-function Install-Git {
-    <#
-    .SYNOPSIS
-    Checks for and installs Git.
-    #>
-    if (Get-Command git -ErrorAction SilentlyContinue) {
-        Write-Host -ForegroundColor Green "Git is already installed."
-        return
-    }
-
-    Write-Host "Installing Git..."
-    winget install -e --id Git.Git --accept-package-agreements --accept-source-agreements
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Git installed successfully."
-    } else {
-        Write-Error "Git installation failed."
-    }
-}
-
-function Install-WindowsTerminal {
-    <#
-    .SYNOPSIS
-    Checks for and installs Windows Terminal.
-    #>
-    # Windows Terminal executable is 'wt.exe', but it's a store app, so Get-Command might not always find it if the alias isn't set for the admin user context yet.
-    # However, winget list is a reliable fallback.
-    $isInstalled = (Get-Command wt -ErrorAction SilentlyContinue)
-    if (-not $isInstalled) {
-         winget list --id Microsoft.WindowsTerminal -e 2>$null | Out-Null
-         $isInstalled = ($LASTEXITCODE -eq 0)
-    }
-
-    if ($isInstalled) {
-        Write-Host -ForegroundColor Green "Windows Terminal is already installed."
-        return
-    }
-
-    Write-Host "Installing Windows Terminal..."
-    winget install -e --id Microsoft.WindowsTerminal --accept-package-agreements --accept-source-agreements
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Windows Terminal installed successfully."
-    } else {
-        Write-Error "Windows Terminal installation failed."
-    }
+    Write-Host "Installing $Name..."
+    winget install -e --id $Id --accept-package-agreements --accept-source-agreements
+    if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1978335175) { Write-Host "$Name installed." }
+    else { Write-Error "$Name installation failed." }
 }
 
 function Install-Python {
-    <#
-    .SYNOPSIS
-    Checks for and installs Python 3.13.
-    #>
-    if (Get-Command python -ErrorAction SilentlyContinue) {
-        Write-Host -ForegroundColor Green "Python is already installed."
+    $Id = "Python.Python.3.13"
+    $isInstalled = (Get-Command python -ErrorAction SilentlyContinue) -and (python --version 2>$null)
+    
+    if ($isInstalled) {
+        Write-Host -ForegroundColor Green "Python 3.13 is already installed."
         return
     }
 
-    Write-Host "Installing Python 3.13..."
-    winget install -e --id Python.Python.3.13 --accept-package-agreements --accept-source-agreements
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Python 3.13 installed successfully."
-    } else {
-        Write-Error "Python 3.13 installation failed."
+    # Check via WinGet if not in PATH
+    winget list --id $Id -e 2>$null | Out-Null
+    $detected = ($LASTEXITCODE -eq 0)
+
+    if (-not $detected) {
+        Write-Host "Installing Python 3.13..."
+        winget install -e --id $Id --accept-package-agreements --accept-source-agreements
+    }
+
+    # Fix PATH if installed (newly or previously) but not working
+    if ($detected -or $LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1978335175) {
+        $regPath = "Software\Python\PythonCore\3.13\InstallPath"
+        $installPath = try { (Get-ItemProperty "HKCU:\$regPath" -ErrorAction Stop).'(default)' } catch { try { (Get-ItemProperty "HKLM:\$regPath" -ErrorAction Stop).'(default)' } catch { $null } }
+        
+        if ($installPath -and (Test-Path $installPath)) {
+            $scriptsPath = Join-Path $installPath "Scripts"
+            $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+            
+            # Prepend to User PATH
+            $pathParts = @($installPath, $scriptsPath) + ($userPath -split ';' | Where-Object { $_ -ne "" -and $_ -ne $installPath -and $_ -ne $scriptsPath })
+            $newUserPath = $pathParts -join ';'
+            
+            if ($newUserPath -ne $userPath) {
+                [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
+                Write-Host -ForegroundColor Green "Fixed User PATH: Python prepended."
+            }
+
+            # Update Session PATH
+            $env:Path = "$installPath;$scriptsPath;" + $env:Path
+            Write-Host -ForegroundColor Green "Session PATH updated."
+            python --version
+        } else {
+            Write-Warning "Python installed but path not found in Registry."
+        }
     }
 }
 
-function Install-NodeJS {
-    <#
-    .SYNOPSIS
-    Checks for and installs Node.js.
-    #>
-    if (Get-Command node -ErrorAction SilentlyContinue) {
-        Write-Host -ForegroundColor Green "Node.js is already installed."
-        return
-    }
+Write-Host "Starting installation..."
 
-    Write-Host "Installing Node.js..."
-    winget install -e --id OpenJS.NodeJS --accept-package-agreements --accept-source-agreements
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Node.js installed successfully."
-    } else {
-        Write-Error "Node.js installation failed."
-    }
-}
-
-Write-Host "Starting IDE and Tools installation process..."
-
-# 1. Install WinGet package manager if not present.
 Install-WinGet
-
-# 2. Install Tools
-Install-WindowsTerminal
-Install-Git
-Install-VSCode
+Install-App -Id "Microsoft.WindowsTerminal" -Name "Windows Terminal" -Cmd "wt" -CheckList
+Install-App -Id "Git.Git" -Name "Git" -Cmd "git"
+Install-App -Id "Microsoft.VisualStudioCode" -Name "VS Code" -Cmd "code"
+Install-App -Id "OpenJS.NodeJS" -Name "Node.js" -Cmd "node"
 Install-Python
-Install-NodeJS
+Install-App -Id "astral-sh.uv" -Name "uv" -Cmd "uv"
 
-# 3. Post-install instructions.
-Write-Host ""
-Write-Host -ForegroundColor Green "--------------------------------------------------------"
-Write-Host -ForegroundColor Green "IDE installation script finished."
-Write-Host -ForegroundColor Green "--------------------------------------------------------"
-Write-Host "Next Steps:"
-Write-Host "1. Restart your shell or terminal to ensure all new PATH variables are loaded."
-Write-Host "2. You can launch VS Code by typing 'code' in your terminal."
-Write-Host "3. You can launch Git Bash or use 'git' commands in any terminal."
-Write-Host "4. You can launch Python by typing 'python' in your terminal."
-Write-Host "5. You can launch Node.js by typing 'node' in your terminal."
-Write-Host ""
+Write-Host "`n--------------------------------------------------------"
+Write-Host -ForegroundColor Green "Installation finished."
+Write-Host "Restart your terminal and check all tools are available."

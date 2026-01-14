@@ -40,11 +40,11 @@
   - Snapshot
   - Reti: NAT, Host-only, Bridged
 - **Setup:**
-  - Import box Ubuntu
+  - Import box bento/almalinux-10
   - Vagrantfile minimal
 - **Esercizio:**
-  - VM con 2 NIC (NAT + Host-only)
   - Port forwarding 8080
+  - Ip statico 192.168.56.82
 
 ---
 
@@ -54,14 +54,15 @@
 - **File Management:** `cp`, `mv`, `rm`, `chmod/chown`, `tar`, `rsync`
 - **Processi:** `ps`, `top/htop`, `systemctl`
 - **Editor:** vi/vim basics
-- **Esercizio:** Script bash verifica servizi e log
 
 ---
 
 ### Gestione Pacchetti e Servizi (20’)
 
-- **Comandi:**
-  - `apt update/upgrade/install`
+- **Package Managers:**
+  - RedHat/AlmaLinux: `dnf`, `rpm`
+  - Debian/Ubuntu: `apt`
+- **Service Management:**
   - `systemctl enable/start/status/logs`
 - **Esercizio:**
-  - Installare curl, git, python3-pip
+  - Installare mosquitto via dnf

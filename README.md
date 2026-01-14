@@ -43,6 +43,24 @@ Installa Docker Desktop e configura i requisiti WSL2/Hyper-V.
 .\scripts\docker.ps1
 ```
 
+## 4. Avvio e Monitoraggio
+
+Una volta configurato l'ambiente (passi 1-3), segui questi passaggi per avviare il sistema:
+
+1. **Avvia la VM Vagrant:**
+   ```bash
+   vagrant up
+   ```
+
+2. **Avvia l'App di Telemetria:**
+   Vedi [app/README.md](app/README.md) per i dettagli.
+
+3. **Monitoraggio (WSL e MQTT Explorer):**
+   Dopo aver avviato VM e App, configura WSL e apri MQTT Explorer per visualizzare i dati.
+   ```powershell
+   .\scripts\wsl.ps1
+   ```
+
 ---
 
 ## Risoluzione dei problemi
