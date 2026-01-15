@@ -40,7 +40,13 @@ listener 1883
 allow_anonymous true
 EOF
 
-    # 4. Start Service
+    # 4. Configure Mosquitto Main Config
+    # Ensure external config files are included
+    if ! grep -q "include_dir /etc/mosquitto/conf.d" /etc/mosquitto/mosquitto.conf; then
+        echo "include_dir /etc/mosquitto/conf.d" >> /etc/mosquitto/mosquitto.conf
+    fi
+
+    # 5. Start Service
     systemctl enable --now mosquitto
   SHELL
 

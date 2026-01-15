@@ -1,10 +1,10 @@
 [project]
-name = "devops-telemetry-app"
+name = "devops-monitoring-app"
 version = "0.1.0"
-description = "Laptop telemetry publisher for DevOps module"
+description = "Laptop monitoring app for DevOps module"
 dependencies = [
-    "psutil",
-    "paho-mqtt<2",
+    "psutil>=6.0.0",
+    "paho-mqtt>=2.0.0",
 ]
 
 [tool.uv]
