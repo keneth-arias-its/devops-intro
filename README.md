@@ -1,5 +1,19 @@
 # DevOps Intro - Setup
 
+## 🎓 Compito / Assignment
+
+**Obiettivo**: Eseguire l'ambiente di laboratorio e dimostrarne il funzionamento.
+
+1.  Segui la guida qui sotto per configurare ed eseguire la VM e l'Agente.
+2.  Carica in questo repository gli **Screenshot** (immagini PNG o JPG) che dimostrano:
+    *   📸 **Terminale Python**: Lo script `main.py` in esecuzione che invia dati.
+    *   📸 **VirtualBox**: La VM `devops-vm` nello stato "Running".
+    *   📸 **MQTT Explorer**: I dati che arrivano sui topic `laptop/monitoring/...`.
+3.  Fai **Commit & Push**.
+    *   *GitHub Actions verificherà automaticamente la presenza delle immagini.*
+
+---
+
 Questo repository contiene i materiali e gli script di automazione per il corso DevOps. Incluso nel progetto c'è un laboratorio pratico con una VM **Vagrant** (Broker MQTT) e un **Agente di monitoraggio Python**.
 
 ## 1. Scaricare il Repository
